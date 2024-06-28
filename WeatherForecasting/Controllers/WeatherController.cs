@@ -15,13 +15,13 @@ namespace WeatherForecasting.Controllers
             _weatherService = weatherService;
         }
 
-        [HttpGet("get")]
-        public async Task<IActionResult> Get([FromQuery] double lat, double lng)
+        [HttpGet("GetWeatherData")]
+        public async Task<IActionResult> GetWeatherData([FromQuery] double lat, double lng)
         {
             var source = new CancellationTokenSource();
             source.CancelAfter(TimeSpan.FromSeconds(5));
 
-            var result = await _weatherService.GetWeathedDataAsync(lat, lng, source.Token);
+            var result = await _weatherService.GetWeatherDataAsync(lat, lng, source.Token);
 
             return Ok(result);
         }
