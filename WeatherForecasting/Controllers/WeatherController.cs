@@ -27,17 +27,5 @@ namespace WeatherForecasting.Controllers
         }
     }
 
-    //public class ResponseTemplate
-    //{
-    //    public object? Result { get; set; } = null;
-      
-    //    public static ResponseTemplate Success(object data)
-    //    {
-    //        return new ResponseTemplate
-    //        {
-    //            Result = data,
-    //        };
-    //    }
-
-    //}
+   
 }

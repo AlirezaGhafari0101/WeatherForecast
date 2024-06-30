@@ -17,7 +17,7 @@ namespace WeatherForecasting.Services
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<WeatherData?> GetWeathedDataAsync(double lat, double lng, CancellationToken cancellationToken)
+        public async Task<ResponseTemplate> GetWeatherDataAsync(double lat, double lng, CancellationToken cancellationToken)
         {
             try
             {
@@ -27,14 +27,16 @@ namespace WeatherForecasting.Services
                 {
                     var databaseResponse = await GetWeatherDataFromDataBaseAsync(lat, lng, cancellationToken);
 
-                    return databaseResponse;
+                    return ResponseTemplate.Success(databaseResponse);
                 }
 
-                return webServiceResponse;
+                await AddWeatherDataToDataBaseAsync(webServiceResponse, cancellationToken);
+
+                return ResponseTemplate.Success(webServiceResponse);
             }
             catch (Exception)
             {
-                return null;
+                return ResponseTemplate.Success(null);
             }
         }
 
@@ -50,12 +52,7 @@ namespace WeatherForecasting.Services
                 var response = await client.GetStringAsync(uri, cancellationToken);
 
                 var deserializedResponse = JsonSerializer.Deserialize<WeatherData>(response);
-
-                if (deserializedResponse != null)
-                {
-                    await AddWeatherDataToDataBaseAsync(deserializedResponse, cancellationToken);
-                }
-
+               
                 return deserializedResponse;
             }
             catch (Exception)
@@ -106,17 +103,19 @@ namespace WeatherForecasting.Services
 
                 if (LocationMainData == null)
                 {
-                    var newLocationMainData = new LocationMainData
-                    {
-                        Elevation = data.elevation,
-                        Latitude = data.latitude,
-                        GenerationtimeMs = data.generationtime_ms,
-                        Longitude = data.longitude,
-                        Timezone = data.timezone,
-                        TimezoneAbbreviation = data.timezone_abbreviation,
-                        UtcOffsetSeconds = data.utc_offset_seconds,
-                        WeatherHourlyDatas = data.hourly.HourlyToWeatherHourlyData(null),
-                    };
+                    //var newLocationMainData = new LocationMainData
+                    //{
+                    //    Elevation = data.elevation,
+                    //    Latitude = data.latitude,
+                    //    GenerationtimeMs = data.generationtime_ms,
+                    //    Longitude = data.longitude,
+                    //    Timezone = data.timezone,
+                    //    TimezoneAbbreviation = data.timezone_abbreviation,
+                    //    UtcOffsetSeconds = data.utc_offset_seconds,
+                    //    WeatherHourlyDatas = data.hourly.HourlyToWeatherHourlyData(null),
+                    //};
+
+                    var newLocationMainData = data.WeatherDataToLocationMainData();
 
                     var weatherDataUnits = data.hourly_units.HourlyUnitToWeatherHourlyUnits();
 
@@ -125,7 +124,7 @@ namespace WeatherForecasting.Services
                     if (!await _repository.IsHourlyUnitExistAsync())
                         await _repository.AddHourlyUnitAsync(weatherDataUnits);
 
-                    await _repository.SaveChangesAsync();
+                 
                 }
                 else
                 {
@@ -133,12 +132,28 @@ namespace WeatherForecasting.Services
 
                     await _repository.AddHourlyDataListAsync(data.hourly.HourlyToWeatherHourlyData(LocationMainData.Id));
                 }
+
+                await _repository.SaveChangesAsync();
             }
             catch (Exception)
             {
 
                 return;
             }
+        }
+
+        public class ResponseTemplate
+        {
+            public object? Result { get; set; } = null;
+
+            public static ResponseTemplate Success(object? data)
+            {
+                return new ResponseTemplate
+                {
+                    Result = data,
+                };
+            }
+
         }
     }
 }

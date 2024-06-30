@@ -78,5 +78,20 @@ namespace WeatherForecasting
                 utc_offset_seconds = locationMainData.UtcOffsetSeconds,
             };
         }
+
+        public static LocationMainData WeatherDataToLocationMainData(this WeatherData data)
+        {
+            return new LocationMainData
+            {
+                Elevation = data.elevation,
+                GenerationtimeMs = data.generationtime_ms,
+                Latitude = data.latitude,
+                Longitude = data.longitude,
+                Timezone = data.timezone,
+                TimezoneAbbreviation = data.timezone_abbreviation,
+                UtcOffsetSeconds = data.utc_offset_seconds,
+                WeatherHourlyDatas = data.hourly.HourlyToWeatherHourlyData(null)
+            };
+        }
     }
 }
